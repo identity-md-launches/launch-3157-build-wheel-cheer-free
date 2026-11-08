@@ -1,0 +1,16 @@
+# Keep generated dependencies and disposable tooling out at every nesting level.
+**/node_modules/
+**/.npm/
+**/.cache/
+/test/scratch/
+
+# Review evidence allowlist: seven files, combined budget 512 KiB (README).
+!artifacts/
+/artifacts/*
+!/artifacts/validation.md
+!/artifacts/design-probe.json
+!/artifacts/render-evidence.json
+!/artifacts/setup-desktop.png
+!/artifacts/setup-mobile.png
+!/artifacts/setup-mobile-demo.png
+!/artifacts/overlay-1280.png

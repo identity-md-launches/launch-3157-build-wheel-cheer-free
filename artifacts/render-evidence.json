@@ -1,0 +1,38 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "copyButton": {
+    "x": 20,
+    "y": 730.875,
+    "width": 216.71875,
+    "height": 48
+  },
+  "fonts": [
+    {
+      "family": "Wheel Bits",
+      "weight": "400",
+      "status": "loaded"
+    }
+  ],
+  "live": {
+    "rpm": "0.0",
+    "state": "Sleeping",
+    "distance": "0.0",
+    "height": "3,205",
+    "round": "728",
+    "countdown": "02:27"
+  },
+  "overlayCanvas": {
+    "width": 1280,
+    "height": 720
+  },
+  "overlayBounds": {
+    "x": 24,
+    "y": 510.40625,
+    "width": 1040,
+    "height": 185.59375
+  },
+  "pageErrors": []
+}

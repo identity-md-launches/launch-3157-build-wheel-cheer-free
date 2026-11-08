@@ -1,0 +1,24 @@
+{
+  "name": "wheel-cheer",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A free, static Squeekchain stream companion for OBS and Streamlabs.",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "build": "vite build && node scripts/export.mjs",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --test test/*.test.mjs",
+    "test:browser": "node test/browser.mjs"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3",
+    "vite": "6.4.5",
+    "playwright": "1.61.1",
+    "@axe-core/playwright": "4.11.1"
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  }
+}
