@@ -6,7 +6,13 @@ import {
   channelName,
   accentText,
 } from "../src/config.ts";
-import { makeSnapshot, countdown, integer } from "../src/model.ts";
+import {
+  makeSnapshot,
+  countdown,
+  integer,
+  wheelState,
+  distanceText,
+} from "../src/model.ts";
 import { retryDelay } from "../src/api.ts";
 import { ChatGame } from "../src/game.ts";
 import { parseMessage, SqueekCooldown } from "../src/chat.ts";
@@ -80,8 +86,29 @@ test("all settings round-trip into a subpath-safe static overlay URL", () => {
   const url = new URL(
     overlayUrl(config, "https://example.org/ipfs/site/index.html"),
   );
-  assert.equal(url.pathname, "/ipfs/site/overlay/");
+  assert.equal(url.pathname, "/ipfs/site/overlay/index.html");
   assert.deepEqual(readConfig(url.search), config);
+});
+test("overlay URLs always name overlay/index.html so IPFS gateways serve the page", () => {
+  const config = readConfig("?layout=bar&theme=dark&session=keep");
+  for (const href of [
+    "https://wheel.example.site/",
+    "https://wheel.example.site/index.html",
+    "https://wheel.example.site/?layout=panel#studio",
+    "https://gateway.example/ipfs/bafy/",
+    "https://gateway.example/ipfs/bafy",
+  ]) {
+    const url = new URL(overlayUrl(config, href));
+    assert.match(url.pathname, /\/overlay\/index\.html$/, href);
+    assert.doesNotMatch(url.pathname, /\/\/|index\.html\/overlay/, href);
+    assert.equal(url.hash, "");
+    assert.equal(url.searchParams.get("layout"), "bar");
+    assert.equal(url.searchParams.get("session"), "keep");
+  }
+  assert.equal(
+    new URL(overlayUrl(config, "https://wheel.example.site/index.html")).pathname,
+    "/overlay/index.html",
+  );
 });
 test("invalid settings are normalized and unsafe channel names never become JOIN commands", () => {
   const c = readConfig(
@@ -358,4 +385,80 @@ test("malformed daily records and event entries do not crash a live overlay", ()
   const g = new ChatGame("cozy", "safe", "test-fixture", memory());
   assert.doesNotThrow(() => g.ingest(snapshot, f));
   g.flush();
+});
+test("fresh positive RPM means Running even when coreStatus still says IDLE", () => {
+  const f = fixture();
+  f.status.data.measurement.coreStatus = "IDLE";
+  f.status.data.measurement.rpmMilli = 77109;
+  const s = makeSnapshot(f, now);
+  assert.equal(s.online, true);
+  assert.equal(s.rpm, 77.109);
+  assert.equal(s.state, "Running");
+});
+test("fresh zero RPM means Sleeping even when coreStatus says ACTIVE", () => {
+  const f = fixture();
+  f.status.data.measurement.coreStatus = "ACTIVE";
+  f.status.data.measurement.rpmMilli = 0;
+  const s = makeSnapshot(f, now);
+  assert.equal(s.rpm, 0);
+  assert.equal(s.state, "Sleeping");
+});
+test("coreStatus is only a fallback when rpmMilli is missing", () => {
+  for (const [core, expected] of [
+    ["ACTIVE", "Running"],
+    ["IDLE", "Sleeping"],
+    ["SOMETHING_NEW", "Unknown"],
+    [undefined, "Unknown"],
+  ]) {
+    const f = fixture();
+    delete f.status.data.measurement.rpmMilli;
+    if (core === undefined) delete f.status.data.measurement.coreStatus;
+    else f.status.data.measurement.coreStatus = core;
+    const s = makeSnapshot(f, now);
+    assert.equal(s.rpm, null);
+    assert.equal(s.state, expected, String(core));
+  }
+  const malformed = fixture();
+  malformed.status.data.measurement.rpmMilli = "fast";
+  malformed.status.data.measurement.coreStatus = "IDLE";
+  assert.equal(makeSnapshot(malformed, now).state, "Sleeping");
+});
+test("stale or missing data stays Unknown whatever RPM or coreStatus say", () => {
+  const stale = fixture();
+  stale.status.data.measurement.coreStatus = "IDLE";
+  stale.status.data.measurement.rpmMilli = 77109;
+  stale.status.data.measurement.freshness = "stale";
+  assert.equal(makeSnapshot(stale, now).state, "Unknown");
+  const old = fixture();
+  old.status.data.measurement.observedAt = new Date(now - 200_000).toISOString();
+  assert.equal(makeSnapshot(old, now).state, "Unknown");
+  const missing = fixture();
+  missing.status = { data: null, error: null, checkedAt: 0 };
+  assert.equal(makeSnapshot(missing, now).state, "Unknown");
+  assert.equal(wheelState(false, 77109, "ACTIVE"), "Unknown");
+  assert.equal(wheelState(true, 1, "IDLE"), "Running");
+  assert.equal(wheelState(true, 0, "ACTIVE"), "Sleeping");
+  assert.equal(wheelState(true, null, "ACTIVE"), "Running");
+});
+test("today's distance has one value and format for overlay and preview", () => {
+  const zero = fixture();
+  zero.stats.data.activity.days[0].distanceMm = 0;
+  const z = makeSnapshot(zero, now);
+  assert.equal(z.distance, 0);
+  assert.deepEqual(distanceText(z), { value: "0.0", unit: "m" });
+  assert.deepEqual(distanceText(makeSnapshot(fixture(), now)), {
+    value: "842.3",
+    unit: "m",
+  });
+  const asText = fixture();
+  asText.stats.data.activity.days[0].coverage.coverageBps = "10000";
+  assert.equal(makeSnapshot(asText, now).distance, 842.3);
+  // A single failed refresh keeps the last good daily total while it is fresh.
+  const blip = fixture();
+  blip.stats.error = "API returned 429";
+  assert.equal(makeSnapshot(blip, now).distance, 842.3);
+  blip.stats.checkedAt = Date.now() - 121_000;
+  const gone = makeSnapshot(blip, now);
+  assert.equal(gone.distance, null);
+  assert.deepEqual(distanceText(gone), { value: "unknown", unit: "" });
 });

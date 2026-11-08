@@ -54,6 +54,70 @@ export function usable(
     ? resource.data
     : null;
 }
+/** rpmMilli as a non-negative finite number, or null when absent or malformed. */
+export function rpmMilliValue(value: unknown): number | null {
+  if (typeof value === "number")
+    return Number.isFinite(value) && value >= 0 ? value : null;
+  return finite(value);
+}
+/**
+ * Displayed wheel state. A fresh RPM reading wins over coreStatus, which can
+ * lag behind (observed: coreStatus "IDLE" while rpmMilli was 77109). coreStatus
+ * is only a fallback when rpmMilli is missing; stale or missing data is Unknown.
+ */
+export function wheelState(
+  online: boolean,
+  rpmMilli: number | null,
+  coreStatus: unknown,
+): Snapshot["state"] {
+  if (!online) return "Unknown";
+  if (rpmMilli !== null) return rpmMilli > 0 ? "Running" : "Sleeping";
+  return coreStatus === "ACTIVE"
+    ? "Running"
+    : coreStatus === "IDLE"
+      ? "Sleeping"
+      : "Unknown";
+}
+/**
+ * The last successfully fetched payload while it is younger than the TTL.
+ * Daily totals change slowly, so a single failed refresh does not blank them.
+ */
+export function lastGood(
+  resource: Resource,
+  now: number,
+  ttl = 120_000,
+): Json | null {
+  return resource.data && now - resource.checkedAt <= ttl
+    ? resource.data
+    : null;
+}
+/** Today's (UTC) API-reported distance in mm; null unless the day is fully covered. */
+export function todayDistanceMm(
+  stats: Json | null,
+  installationId: unknown,
+  now: number,
+): number | null {
+  if (!stats) return null;
+  if (stats.installationId && stats.installationId !== installationId)
+    return null;
+  const today = new Date(now).toISOString().slice(0, 10);
+  const day = Array.isArray(stats.activity?.days)
+    ? stats.activity.days.find((day: Json) => day?.date === today)
+    : null;
+  return finite(day?.coverage?.coverageBps) === 10000
+    ? finite(day.distanceMm)
+    : null;
+}
+/** One formatter for "Today's distance" in the overlay and the setup preview. */
+export function distanceText(snapshot: Snapshot): {
+  value: string;
+  unit: string;
+} {
+  return {
+    value: number(snapshot.distance, 1),
+    unit: snapshot.distance === null ? "" : "m",
+  };
+}
 export function makeSnapshot(feed: Feed, clientNow = Date.now()): Snapshot {
   const now = clientNow + feed.offset;
   const status = usable(feed.status, clientNow);
@@ -92,14 +156,9 @@ export function makeSnapshot(feed: Feed, clientNow = Date.now()): Snapshot {
     now,
   };
   if (!online) return blank;
-  const rpmMilli = finite(measurement.rpmMilli);
+  const rpmMilli = rpmMilliValue(measurement.rpmMilli);
   const rpm = rpmMilli === null ? null : rpmMilli / 1000;
-  const state =
-    measurement.coreStatus === "ACTIVE"
-      ? "Running"
-      : measurement.coreStatus === "IDLE"
-        ? "Sleeping"
-        : "Unknown";
+  const state = wheelState(true, rpmMilli, measurement.coreStatus);
   const anchor =
     status?.builder?.status === "available" ? status.builder.anchor : null;
   const units = integer(anchor?.cumulativeBlockUnits);
@@ -134,16 +193,11 @@ export function makeSnapshot(feed: Feed, clientNow = Date.now()): Snapshot {
       : null;
   const roundEndsAt =
     round !== null && genesis !== null ? (genesis + round * 600) * 1000 : null;
-  const stats = usable(feed.stats, clientNow);
-  const today = new Date(now).toISOString().slice(0, 10);
-  const day = Array.isArray(stats?.activity?.days)
-    ? stats.activity.days.find((day: Json) => day?.date === today)
-    : null;
-  const distanceMm =
-    day?.coverage?.coverageBps === 10000 &&
-    (!stats?.installationId || stats.installationId === status?.installationId)
-      ? finite(day.distanceMm)
-      : null;
+  const distanceMm = todayDistanceMm(
+    lastGood(feed.stats, clientNow),
+    status?.installationId,
+    now,
+  );
   return {
     ...blank,
     online: true,

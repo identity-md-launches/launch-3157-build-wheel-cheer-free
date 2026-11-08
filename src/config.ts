@@ -78,7 +78,9 @@ export function overlayUrl(config: Config, href: string): string {
   const basePath = current.pathname
     .replace(/(?:index\.html)?$/, "")
     .replace(/\/?$/, "/");
-  const url = new URL(basePath + "overlay/", current.origin);
+  // Always name the file: IPFS gateways answer a bare overlay/ directory with
+  // a file listing instead of serving its index.html.
+  const url = new URL(basePath + "overlay/index.html", current.origin);
   const params = new URLSearchParams({
     layout: config.layout,
     theme: config.theme,

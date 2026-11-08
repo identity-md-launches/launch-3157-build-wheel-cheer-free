@@ -22,7 +22,7 @@ npm run build
 npm run preview
 ```
 
-Open the preview URL printed by Vite. The setup is `/`; the static browser-source entry is `/overlay/`. Hosts normally redirect `/overlay` to that directory, preserving the query string. `dist/overlay/index.html` also works directly.
+Open the preview URL printed by Vite. The setup is `/`; the static browser-source entry is the file **`overlay/index.html`**, relative to the site root, with the settings in its query string. Always use that explicit file path: on the IPFS gateway that hosts this site, a bare `overlay/` directory URL returns the gateway’s file listing instead of the overlay, so OBS would show a directory page. The setup page’s **Copy overlay URL** and **Open overlay** both generate `…/overlay/index.html?…`.
 
 `dist/` is the complete, ready-to-serve production export and is included with the source and `package-lock.json`. Serve the **whole directory**, including `assets/`, `favicon.svg`, `share-card.png` and `overlay/index.html`. There is no server rewrite requirement and no backend to deploy. Vite uses `base: './'`; the export script adjusts the overlay entry to use `../assets/`, so a gateway subpath works too. Opening the HTML through `file://` is not a substitute for an HTTP preview.
 
@@ -32,7 +32,7 @@ The build uses committed artwork and the committed 1.1 kB `src/wheel-bits.woff2`
 
 1. Choose a layout, overlay theme, accent, size and widgets. Add your Twitch channel if you want chat predictions. The preview uses an original illustrated sample stream background; the background is excluded from the overlay.
 2. Select **Copy overlay URL**. If clipboard access is blocked, the URL is selected and the page gives manual copying instructions.
-3. Add a **Browser** source in OBS or Streamlabs. Paste the generated URL. Set its dimensions to **1920 × 1080** or **1280 × 720**.
+3. Add a **Browser** source in OBS or Streamlabs. Paste the generated URL unchanged; it ends in `overlay/index.html?` followed by your settings. Do not shorten it to `overlay/`. Set its dimensions to **1920 × 1080** or **1280 × 720**.
 4. Leave **Shutdown source when not visible** and **Refresh browser when scene becomes active** off to keep listening between scenes. Keep one active Wheel Cheer source per channel. A source and its setup preview run independent chat listeners; the OBS browser profile has its own storage.
 5. Optional sound: enable **Celebration sound**, then copy the updated URL. In OBS, enable **Control audio via OBS** and configure its mixer routing (or use the Streamlabs browser audio mixer). If autoplay is blocked, use the source’s **Interact** window and select **Enable sound**.
 
@@ -54,7 +54,7 @@ The setup writes every setting into the generated URL. The setup page can also r
 | `motion` | `1` | `0` pauses the wheel, hamster and celebration animation; `1` enables them. The browser’s reduced-motion preference also stops animation. The preview pause control changes this parameter. |
 | `session` | Generated | A random session identifier, up to 64 letters, numbers, underscores or hyphens. The generated URL always includes it, allowing scores and pending predictions to survive a refresh in the same browser profile. Keep the generated value to continue a session. **New game session** creates a new identifier without deleting earlier sessions. |
 
-For example, `overlay/?layout=bar&theme=transparent&accent=A4D9BD&scale=1&widgets=rpm,status,blocks,round&sound=0&motion=1` is a quiet lower third. Use the setup to generate a complete session URL and optionally add your channel. Unknown query parameters have no effect. **Try demo data** only affects the setup preview and is never encoded in the overlay URL.
+For example, `overlay/index.html?layout=bar&theme=transparent&accent=A4D9BD&scale=1&widgets=rpm,status,blocks,round&sound=0&motion=1` is a quiet lower third. Use the setup to generate a complete session URL and optionally add your channel. Unknown query parameters have no effect. **Try demo data** only affects the setup preview and is never encoded in the overlay URL.
 
 ## How it uses Squeekchain
 
@@ -62,7 +62,7 @@ All data comes directly from the public, read-only API at **https://api.squeekch
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /status` | `measurement.coreStatus`, `rpmMilli`, `speedMmPerSecond`, `distanceMm`, `cumulativeWorkUnits`, freshness and observation time; the builder’s confirmed anchor, settlement boundary and open-round work. RPM is `rpmMilli / 1000`. `ACTIVE` means running, `IDLE` means sleeping. |
+| `GET /status` | `measurement.coreStatus`, `rpmMilli`, `speedMmPerSecond`, `distanceMm`, `cumulativeWorkUnits`, freshness and observation time; the builder’s confirmed anchor, settlement boundary and open-round work. RPM is `rpmMilli / 1000`. Running/sleeping follows fresh RPM first (see below); `coreStatus` (`ACTIVE` running, `IDLE` sleeping) is only a fallback when `rpmMilli` is missing. |
 | `GET /economy/state` | Confirms current-round availability through `lifecycle.currentRound` (or `capabilities.core.currentRound`). Supply and asset metadata are not used. |
 | `GET /core` | Public round genesis, 600-second duration, and confirmed `RoundRecorded` / `BatchSettled` event evidence. This supporting endpoint supplies the epoch that the two primary endpoints do not expose. |
 | `GET /measurement/stats?range=7d` | API-reported daily distance for today’s UTC date. This supporting endpoint supplies daily totals; instantaneous `measurement.distanceMm` is **not** treated as a daily counter. |
@@ -71,11 +71,20 @@ Each endpoint is polled independently no more often than every **10 seconds**, w
 
 Unavailable fields are `unknown`, not zero. All measurement widgets, including height, daily distance and the round clock, become unknown if `measurement.freshness` is not `online`, the observation has expired, a counter fault occurs, or the status request fails. Old measurements expire after their reported stale interval, capped at 120 seconds, even if the server returns 304. Individual failed/missing supporting resources only affect the dependent widgets. A genuine fresh zero remains zero.
 
+The displayed running/sleeping state is derived from fresh RPM first, because the API’s `coreStatus` can lag (it has been observed as `IDLE` while `rpmMilli` was 77109):
+
+- freshness online and `rpmMilli > 0` → **Running**: running copy, wheel spinning at that RPM;
+- freshness online and `rpmMilli` is `0` → **Sleeping**;
+- `rpmMilli` missing or malformed → fall back to `coreStatus` (`ACTIVE` running, `IDLE` sleeping, anything else unknown);
+- stale, expired or missing status data → **Unknown**.
+
+The overlay and the setup preview use the same rule (`wheelState` in `src/model.ts`).
+
 Squeek height uses integer arithmetic: `floor(cumulativeBlockUnits / 1_000_000_000)`, falling back to the explicit anchor `blockHeight` if block units are missing. Only an increase after the first known height triggers a pop and, when enabled, a three-note synthesized chime.
 
 The round ID is `floor((serverNowSeconds - genesisTimestamp) / 600) + 1`; its end is `genesisTimestamp + roundId * 600`. The app calibrates its clock from a new status response, then lets it advance between polls. A 304 does not reset that clock. The countdown updates once a second.
 
-Today’s distance is `distanceMm / 1000` from the API’s matching UTC day with **100% reported coverage**. It includes completed rounds and can lag current movement. Missing/incomplete coverage stays unknown; the app never adds up sparse telemetry samples or invents a day total. The displayed day follows the API’s day records and coverage classification.
+Today’s distance is `distanceMm / 1000` from the API’s matching UTC day with **100% reported coverage**. It includes completed rounds and can lag current movement. Missing/incomplete coverage stays unknown; the app never adds up sparse telemetry samples or invents a day total. The displayed day follows the API’s day records and coverage classification. The overlay and the setup preview read the same value (`todayDistanceMm`) and format it the same way (`distanceText`): one decimal plus `m`, e.g. `0.0 m`, or `unknown` without a unit. A single failed refresh of the daily stats keeps the last successfully fetched total for up to 120 seconds instead of flickering to unknown.
 
 ## Chat game and local scores
 

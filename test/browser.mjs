@@ -67,6 +67,7 @@ function model() {
     settled: 0,
     online: true,
     rpmValue: 72400,
+    coreStatus: "ACTIVE",
     failStatus: false,
     retry: null,
     notModified: false,
@@ -89,7 +90,7 @@ function payload(path, m) {
         freshness: m.online ? "online" : "stale",
         observedAt: new Date(m.now).toISOString(),
         staleAfterSeconds: 120,
-        coreStatus: "ACTIVE",
+        coreStatus: m.coreStatus,
         rpmMilli: m.rpmValue,
         speedMmPerSecond: 1058,
         distanceMm: 4232,
@@ -285,6 +286,56 @@ try {
   record(
     "production export loads under /preview/ with original local assets and no chat connection by default",
   );
+  {
+    // The setup preview and the copied overlay URL must agree on state and distance.
+    m.coreStatus = "IDLE";
+    m.rpmValue = 77109;
+    m.version++;
+    await advance(page, m, 11000);
+    const read = (target) =>
+      target.evaluate(() => {
+        const q = (k) =>
+          document.querySelector(`[data-value="${k}"]`).textContent;
+        return {
+          state: q("state"),
+          rpm: q("rpm"),
+          caption: q("rpm-caption"),
+          distance: q("distance"),
+          unit: q("distance-unit"),
+          spinning: document.querySelector(".wheel-overlay").dataset.spinning,
+        };
+      });
+    const preview = await read(page);
+    assert.deepEqual(preview, {
+      state: "Running",
+      rpm: "77.1",
+      caption: "Go, little guy. Go!",
+      distance: "842.3",
+      unit: "m",
+      spinning: "true",
+    });
+    const copied = new URL(await page.locator("#overlay-url").inputValue());
+    assert.equal(copied.pathname, "/preview/overlay/index.html");
+    assert.equal(
+      await page.locator("#open-overlay").getAttribute("href"),
+      copied.href,
+    );
+    const live = await context.newPage();
+    await live.clock.install({ time: new Date(m.now) });
+    const response = await live.goto(copied.href);
+    assert.equal(response.status(), 200);
+    assert.equal(await live.title(), "Wheel Cheer · Stream overlay");
+    await online(live);
+    assert.deepEqual(await read(live), preview);
+    await live.close();
+    m.coreStatus = "ACTIVE";
+    m.rpmValue = 72400;
+    m.version++;
+    await advance(page, m, 11000);
+    record(
+      "copied overlay URL names overlay/index.html, renders the overlay, and matches the preview's Running state (IDLE + 77.1 RPM) and today's distance",
+    );
+  }
   const accessibility = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
     .analyze();
@@ -541,7 +592,7 @@ try {
       for (const theme of ["dark", "light", "transparent"]) {
         await overlayPage.setViewportSize({ width, height });
         await overlayPage.goto(
-          `${url}overlay/?layout=${layout}&theme=${theme}&scale=1.5&channel=wheel_test&session=variant&widgets=rpm,status,distance,blocks,round,votes,leaderboard`,
+          `${url}overlay/index.html?layout=${layout}&theme=${theme}&scale=1.5&channel=wheel_test&session=variant&widgets=rpm,status,distance,blocks,round,votes,leaderboard`,
         );
         await online(overlayPage);
         const box = await overlayPage.locator(".overlay-surface").boundingBox();
@@ -602,12 +653,48 @@ try {
   record(
     "clear overlay text passes automated contrast on its actual dark backplates",
   );
+  // Fresh RPM outranks a lagging coreStatus (live API: IDLE with rpmMilli 77109).
+  m.coreStatus = "IDLE";
+  m.rpmValue = 77109;
+  m.version++;
+  await advance(overlayPage, m, 11000);
+  assert.equal(
+    await overlayPage.locator("[data-value=rpm]").innerText(),
+    "77.1",
+  );
+  assert.equal(
+    await overlayPage.locator("[data-value=state]").innerText(),
+    "Running",
+  );
+  assert.equal(
+    await overlayPage.locator("[data-value=rpm-caption]").innerText(),
+    "Go, little guy. Go!",
+  );
+  assert.equal(
+    await overlayPage.locator(".wheel-overlay").getAttribute("data-spinning"),
+    "true",
+  );
+  assert.notEqual(
+    await overlayPage
+      .locator(".wheel-rotor")
+      .evaluate((el) => getComputedStyle(el).animationName),
+    "none",
+  );
+  m.coreStatus = "ACTIVE";
   m.rpmValue = 0;
   m.version++;
   await advance(overlayPage, m, 11000);
   assert.equal(
     await overlayPage.locator("[data-value=rpm]").innerText(),
     "0.0",
+  );
+  assert.equal(
+    await overlayPage.locator("[data-value=state]").innerText(),
+    "Sleeping",
+  );
+  assert.equal(
+    await overlayPage.locator(".wheel-overlay").getAttribute("data-state"),
+    "sleeping",
   );
   assert.equal(
     await overlayPage
@@ -628,10 +715,15 @@ try {
       .evaluate((el) => getComputedStyle(el).animationName),
     "none",
   );
+  assert.equal(
+    await overlayPage.locator("[data-value=state]").innerText(),
+    "Running",
+    "missing RPM falls back to coreStatus ACTIVE",
+  );
   m.rpmValue = 72400;
   m.version++;
   record(
-    "zero and unavailable RPM both stop the wheel without simulating movement",
+    "state follows fresh RPM (IDLE + 77.1 RPM runs, ACTIVE + 0 sleeps, missing RPM uses coreStatus); zero and unavailable RPM stop the wheel",
   );
   await overlayPage.goto(
     `${url}overlay?widgets=rpm,status,distance,blocks,round`,

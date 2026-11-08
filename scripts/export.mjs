@@ -11,4 +11,4 @@ await writeFile(
       "<title>Wheel Cheer · Stream overlay</title>",
     ),
 );
-console.log("Exported setup and /overlay/ with relative assets.");
+console.log("Exported setup and overlay/index.html with relative assets.");

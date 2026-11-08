@@ -1,7 +1,7 @@
 import type { Config, Widget } from "./config.ts";
 import { accentText, escapeHtml } from "./config.ts";
 import { hamsterLogo, icon, wheelArt } from "./art.ts";
-import { countdown, number } from "./model.ts";
+import { countdown, distanceText, number } from "./model.ts";
 import type { Snapshot } from "./model.ts";
 import type { ChatGame } from "./game.ts";
 import type { ChatStatus } from "./chat.ts";
@@ -36,7 +36,7 @@ export class WheelOverlay {
     element.innerHTML = `<section class="overlay-surface" aria-label="Squeektoshi live wheel">
       <header class="overlay-head"><span class="overlay-name">${hamsterLogo()}Squeektoshi</span><span class="hamster-state" data-widget="status"><span class="status-dot"></span><span data-value="state">Unknown</span></span></header>
       <div class="wheel-row" data-wheel-row><div class="wheel-wrap">${wheelArt()}</div><div class="rpm-block" data-widget="rpm"><div class="rpm-reading"><span class="pixel-number" data-value="rpm">unknown</span><span class="rpm-unit">RPM</span></div><div class="rpm-meter" role="meter" aria-label="Wheel speed" aria-valuemin="0" aria-valuemax="120"><span></span></div><span class="rpm-caption" data-value="rpm-caption">Waiting for the wheel</span></div></div>
-      <div class="overlay-metrics"><div class="overlay-metric" data-widget="distance"><span>Today’s distance</span><strong><span class="pixel-number" data-value="distance">unknown</span> <small data-value="distance-unit">m</small></strong><span class="metric-note">UTC · completed rounds</span></div><div class="overlay-metric block-metric" data-widget="blocks"><span>Squeek height</span><strong class="pixel-number" data-value="height">unknown</strong><span class="metric-note">Confirmed blocks</span></div></div>
+      <div class="overlay-metrics"><div class="overlay-metric" data-widget="distance"><span>Today’s distance</span><strong><span class="pixel-number" data-value="distance">unknown</span> <small data-value="distance-unit"></small></strong><span class="metric-note">UTC · completed rounds</span></div><div class="overlay-metric block-metric" data-widget="blocks"><span>Squeek height</span><strong class="pixel-number" data-value="height">unknown</strong><span class="metric-note">Confirmed blocks</span></div></div>
       <div class="round-widget" data-widget="round"><div class="round-top"><span>Round <span data-value="round-id">unknown</span></span><span class="pixel-number" data-value="countdown">unknown</span></div><div class="round-track"><span></span></div></div>
       <section class="vote-widget" data-widget="votes"><div class="vote-title"><strong>Run or snooze?</strong><span data-value="vote-total">0 votes</span></div><div class="vote-labels"><span><b>!run</b> <span data-value="run">0</span></span><span><span data-value="sleep">0</span> <b>!sleep</b></span></div><div class="vote-track" role="img" aria-label="No votes yet"><span></span></div><p class="vote-hint" data-value="vote-hint">Vote in Twitch chat</p></section>
       <section class="leaderboard-widget" data-widget="leaderboard"><div class="leaderboard-title">${icon("star")}<strong>Session top 10</strong></div><ol class="leaderboard-list"></ol><p class="leaderboard-empty">Your first correct prediction starts the board.</p></section>
@@ -91,7 +91,9 @@ export class WheelOverlay {
             : "Wheel status unknown"
         : "Waiting for a fresh reading",
     );
-    text("distance", number(s.distance, 1));
+    const distance = distanceText(s);
+    text("distance", distance.value);
+    text("distance-unit", distance.unit);
     text("height", number(s.height));
     text("round-id", number(s.round));
     text("countdown", countdown(s));
