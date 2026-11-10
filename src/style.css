@@ -15,6 +15,8 @@
   --gray-300: #b5b3bd;
   --amber-400: #f5ba69;
   --mint-300: #a4d9bd;
+  --amber-300: #ffd08d;
+  --violet-300: #bcadf0;
   --bg: var(--charcoal-950);
   --surface: var(--charcoal-900);
   --field: var(--charcoal-800);
@@ -23,6 +25,8 @@
   --muted: var(--gray-300);
   --accent: var(--amber-400);
   --positive: var(--mint-300);
+  --accent-hover: var(--amber-300);
+  --chat: var(--violet-300);
   --focus: #b9e8d1;
   --error: #ffb4b1;
   --text-xs: 12px;
@@ -123,8 +127,8 @@ legend {
   display: none !important;
 }
 ::selection {
-  background: #f5ba69;
-  color: #1a1a20;
+  background: var(--accent);
+  color: var(--bg);
 }
 :focus-visible {
   outline: 2px solid var(--focus);
@@ -209,8 +213,10 @@ legend {
   align-items: center;
   gap: 6px;
 }
-.site-header nav a:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .site-header nav a:hover {
+    color: var(--text);
+  }
 }
 .site-header nav .nav-active {
   color: var(--text);
@@ -317,8 +323,10 @@ h2 {
   color: var(--muted);
   text-decoration: none;
 }
-.text-button:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .text-button:hover {
+    color: var(--text);
+  }
 }
 .text-button .icon {
   height: 16px;
@@ -398,7 +406,7 @@ h2 {
 .layout-mini b {
   position: absolute;
   display: block;
-  background: #b5b3bd;
+  background: var(--muted);
   border-radius: 2px;
 }
 .mini-badge b {
@@ -597,7 +605,7 @@ input[type="range"] {
   gap: 7px;
 }
 .chat-control > label > .icon {
-  color: #bcadf0;
+  color: var(--chat);
   width: 16px;
   height: 16px;
 }
@@ -757,6 +765,12 @@ input[type="range"] {
   border-radius: 50%;
   background: var(--positive);
 }
+.preview-dot.is-offline {
+  background: var(--muted);
+}
+.preview-dot.is-demo {
+  background: var(--accent);
+}
 .preview-controls {
   display: flex;
   align-items: center;
@@ -785,9 +799,11 @@ input[type="range"] {
   color: var(--muted);
   padding: 5px;
 }
-.icon-button:hover {
-  color: var(--text);
-  background: var(--border);
+@media (hover: hover) {
+  .icon-button:hover {
+    color: var(--text);
+    background: var(--border);
+  }
 }
 .icon-button .icon {
   width: 16px;
@@ -934,8 +950,10 @@ input[type="range"] {
   color: #282328;
   flex: 1;
 }
-.primary-button:hover {
-  background: #ffd08d;
+@media (hover: hover) {
+  .primary-button:hover {
+    background: var(--accent-hover);
+  }
 }
 .primary-button:active {
   transform: scale(0.98);
@@ -946,8 +964,10 @@ input[type="range"] {
   font-weight: 400;
   min-width: 170px;
 }
-.secondary-button:hover {
-  background: var(--border);
+@media (hover: hover) {
+  .secondary-button:hover {
+    background: var(--border);
+  }
 }
 .export-actions .icon {
   width: 18px;
@@ -974,7 +994,7 @@ input[type="range"] {
   border-block-start: 1px solid var(--border);
 }
 .chat-explainer > .icon {
-  color: #bcadf0;
+  color: var(--chat);
   margin-block-start: 2px;
 }
 .chat-explainer strong {
@@ -994,7 +1014,7 @@ input[type="range"] {
   padding: 8px 12px;
   border-radius: 6px;
   white-space: nowrap;
-  color: #bcadf0;
+  color: var(--chat);
   margin-inline-start: auto;
 }
 .command-tag > span {

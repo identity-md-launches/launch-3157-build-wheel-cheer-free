@@ -8,7 +8,7 @@ The studio stays dark. Overlay themes apply only to the reusable widget, whose s
 
 ## Colors
 
-The `:root` palette in `src/style.css` uses hexadecimal primitives and semantic aliases. Reuse the aliases in setup components.
+The `:root` palette in `src/style.css` uses hexadecimal primitives and semantic aliases. Setup components reference the aliases. The text selection colour also uses them (`--accent` on `--bg`). Raw hex values are left only inside the illustrated scene and the overlay theme blocks, which keep their own per-theme palette.
 
 | Primitive / semantic token | Value | Role |
 | --- | --- | --- |
@@ -19,7 +19,9 @@ The `:root` palette in `src/style.css` uses hexadecimal primitives and semantic 
 | `--cream-100` / `--text` | `#F3EEE5` | Primary text |
 | `--gray-300` / `--muted` | `#B5B3BD` | Supporting text |
 | `--amber-400` / `--accent` | `#F5BA69` | Copy action, selected layout, brand highlight |
-| `--mint-300` / `--positive` | `#A4D9BD` | Connected state, supporting links |
+| `--mint-300` / `--positive` | `#A4D9BD` | Connected state, supporting links, live heading dot |
+| `--amber-300` / `--accent-hover` | `#FFD08D` | Copy action hover (pointer devices only) |
+| `--violet-300` / `--chat` | `#BCADF0` | Twitch chat icon, chat explainer icon, command tags |
 | `--focus` | `#B9E8D1` | Keyboard focus perimeter |
 | `--error` | `#FFB4B1` | Inline channel validation |
 
@@ -79,11 +81,11 @@ The radius tokens are `--radius-sm: 8px`, `--radius-md: 12px` and `--radius-lg: 
 | Pattern / implementation | Use and states |
 | --- | --- |
 | `SetupPage`, `src/setup.ts` | Builds the studio; live URL updates, labelled controls, inline channel validation, clipboard success/failure, demo and reset. Hooks are `onChange`, `onDemo`, `onCheer`. |
-| `.primary-button`, `.secondary-button`, `.text-button`, `.icon-button` | Amber copy action, neutral open link (both use the explicit `overlay/index.html?…` file URL), contextual actions and named icon controls. Native buttons/links keep keyboard activation and focus. Success changes the copy label; denied clipboard selects the URL and explains manual copying in a stable live region. |
+| `.primary-button`, `.secondary-button`, `.text-button`, `.icon-button` | Hover colours sit inside `@media (hover: hover)`, so a tap on a touch screen does not leave a stuck hover state; `:active` (copy scales to 0.98) and `:focus-visible` apply everywhere. Amber copy action, neutral open link (both use the explicit `overlay/index.html?…` file URL), contextual actions and named icon controls. Native buttons/links keep keyboard activation and focus. Success changes the copy label; denied clipboard selects the URL and explains manual copying in a stable live region. |
 | `.layout-choice`, `.theme-choice` | Labelled native radio groups with arrow-key selection. Layout uses illustrated thumbnails and one amber selection outline; theme uses segmented surfaces. |
 | `.widget-choice`, `.custom-color`, `.sound-control` | Native checkbox, color and switch controls. Labels share their hit targets. Range input and linked output control scale. |
 | `.channel-input`, `.field-hint`, `.field-error` | Persistent Twitch label and example placeholder. Errors set `aria-invalid`, describe allowed names, and receive focus when copying/opening cannot proceed. |
-| `.preview-panel`, `.stream-stage` | Original illustrated sample footage, actual reusable overlay, live/unknown/demo status and pause/test actions. Demo is labelled in the widget and studio; it is never put in the generated overlay URL. |
+| `.preview-panel`, `.stream-stage` | Original illustrated sample footage, actual reusable overlay, live/unknown/demo status and pause/test actions. The `.preview-dot` beside “Live preview” follows the footer status: mint when connected, `--muted` with `.is-offline` while connecting or unavailable, amber with `.is-demo` during demo data. Demo is labelled in the widget and studio; it is never put in the generated overlay URL. |
 | `WheelOverlay`, `src/overlay.ts` | `configure()` applies layout, theme, accent, widgets and motion; `update()` renders fresh data, votes and scores. Individual widget switches use `hidden`. Missing or stale fields say `unknown`; fresh zeros remain zero. The status chip, caption, `z` sprite and wheel follow `wheelState()` (fresh RPM > 0 = Running, 0 = Sleeping, `coreStatus` only when RPM is missing, stale = Unknown). Today’s distance uses `distanceText()`: `0.0` + unit `m`, or `unknown` with an empty unit. The setup preview is this same component with the same snapshot. |
 | `.vote-widget`, `.leaderboard-widget` | Counts and proportional vote bar, chat connection/pending messages, ordered session top ten. Empty board explains how to fill it; names use escaped text and bidirectional isolation. |
 | `.overlay-notices` | Three-second block cheer, ten-second confirmed result and eight-second wheel check. Each has static text as well as optional motion. |

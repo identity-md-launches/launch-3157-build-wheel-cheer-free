@@ -1,23 +1,26 @@
 {
   "probe": "taste@1",
+  "run": "2026-11-10, final export, Chromium headless shell 1248 via an executable-path adapter; probe source unmodified",
   "widths": [
     320,
     390,
     1440
   ],
+  "passed": 16,
+  "total": 16,
   "checks": [
     {
       "name": "render",
       "passed": true,
       "exitCode": 0,
-      "durationMs": 7864,
+      "durationMs": 10970,
       "output": "renders, no script errors or missing local files\nexternal hosts: api.squeekchain.com"
     },
     {
       "name": "layout",
       "passed": true,
       "exitCode": 0,
-      "durationMs": 0,
+      "durationMs": 1,
       "output": "no horizontal scroll at 320, 390 or 1440\nno text box overlaps another\nno floating control covers text\nno text cut off by overflow: hidden"
     },
     {
@@ -31,7 +34,7 @@
       "name": "contrast",
       "passed": true,
       "exitCode": 0,
-      "durationMs": 1,
+      "durationMs": 0,
       "output": "all measured text meets 4.5:1 (3:1 large)"
     },
     {
@@ -52,7 +55,7 @@
       "name": "eyebrows",
       "passed": true,
       "exitCode": 0,
-      "durationMs": 0,
+      "durationMs": 1,
       "output": "no kicker labels above headings"
     },
     {
@@ -60,20 +63,20 @@
       "passed": true,
       "exitCode": 0,
       "durationMs": 0,
-      "output": "390: 5 sizes in use, 5 with one-offs (12px×37, 14px×35, 16px×3, 20px×9, 32px×2)\n1440: 5 sizes in use, 5 with one-offs (12px×40, 14px×41, 16px×4, 20px×9, 44px×2)\nbar: 6 sizes used more than once, 8 counting one-offs, per width"
+      "output": "390: 5 sizes in use, 5 with one-offs (12px×36, 14px×36, 16px×3, 20px×9, 32px×2)\n1440: 5 sizes in use, 5 with one-offs (12px×39, 14px×42, 16px×4, 20px×9, 44px×2)\nbar: 6 sizes used more than once, 8 counting one-offs, per width"
     },
     {
       "name": "type-faces",
       "passed": true,
       "exitCode": 0,
-      "durationMs": 1,
+      "durationMs": 0,
       "output": "families (2): ui-sans-serif, wheel bits\nweights (2): 400, 700"
     },
     {
       "name": "glyphs",
       "passed": true,
       "exitCode": 0,
-      "durationMs": 0,
+      "durationMs": 1,
       "output": "no em dashes or emoji in text"
     },
     {
@@ -87,7 +90,7 @@
       "name": "repetition",
       "passed": true,
       "exitCode": 0,
-      "durationMs": 1,
+      "durationMs": 2,
       "output": "no repeated lines"
     },
     {
@@ -95,7 +98,7 @@
       "passed": true,
       "exitCode": 0,
       "durationMs": 0,
-      "output": "prose on the first screen: 18 words at 390 (bar 60), 15 at 1440 (bar 90)\nall words on the first screen: 77 at 390, 120 at 1440\nwhole page: 345 words, 131 of them prose"
+      "output": "prose on the first screen: 18 words at 390 (bar 60), 15 at 1440 (bar 90)\nall words on the first screen: 76 at 390, 119 at 1440\nwhole page: 353 words, 131 of them prose"
     },
     {
       "name": "chrome",

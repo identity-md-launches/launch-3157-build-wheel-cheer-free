@@ -101,10 +101,26 @@ Scores, current votes, pending rounds and scoring markers live in `localStorage`
 
 Actual worker results, review findings, coverage and limitations are in [artifacts/validation.md](artifacts/validation.md). The implemented design system is in [DESIGN.md](DESIGN.md).
 
+Latest run, 10 November 2026, on the final source after `npm ci`. Every command exited 0:
+
+- `npm run typecheck`
+- `npm run build`
+- `npm test`
+- the browser suite
+- the pinned taste@1 probe
+
+The live public API was rendered in Chromium for the setup preview and the copied overlay URL. This run fixed three things, detailed in the validation file:
+
+- the “Live preview” dot no longer stays green while the connection is lost or demo data is on;
+- hover colours apply only on devices that can hover;
+- a few raw colours now use the existing design tokens.
+
+It also replaced a fixed wait in the browser test's clock helper that could make the suite fail on a slow machine.
+
 - `npm run typecheck`: passed with TypeScript 5.8.3.
 - `npm run build`: passed with Vite 6.4.5; setup and static overlay exports generated.
-- `npm test`: 24/24 logic tests passed.
-- Production browser suite: 17/17 interaction groups passed, covering settings, keyboard and clipboard recovery, chat protocol/votes, timed rounds and local scoring, data/HTTP edge cases, overlay variants, transparency, reduced motion, contrast and resource checks.
+- `npm test`: 30/30 logic tests passed.
+- Production browser suite: 18/18 interaction groups passed, covering settings, keyboard and clipboard recovery, chat protocol/votes, timed rounds and local scoring, data/HTTP edge cases, overlay variants, transparency, reduced motion, contrast and resource checks.
 - Pinned taste@1 design probe: 16/16 checks passed at 320, 390 and 1440 widths after fixes. The 390 × 844 first screen includes the product preview and copy action.
 - Live public API/CORS and anonymous Twitch welcome were checked in Chromium. Game command/scoring tests use controlled public-protocol fixtures; no messages were posted to a real channel. Reconnection behavior was reviewed in source but not exercised against a live disconnect.
 
@@ -117,9 +133,11 @@ npm run test:browser
 
 The runner manages its static server and browser inside one foreground command, under a `/preview/` subpath, and closes both. It accepts optional Playwright module, Chromium executable and axe module paths as its first, second and third arguments when tooling is installed outside the project.
 
+If Playwright's bundled browser build is missing, pass an installed Chromium or headless-shell executable as the second argument: `node test/browser.mjs node_modules/playwright/index.mjs /path/to/chrome-headless-shell node_modules/@axe-core/playwright/dist/index.mjs`.
+
 Unperformed platform checks: native OBS/Streamlabs audio routing, audible sound on hardware, physical mobile devices, screen-reader sessions, native 200% browser zoom, sustained 60 fps under actual game capture, and WebKit (its required system libraries were unavailable). The wheel and hamster use CSS transforms for motion, with no JavaScript frame loop; host/browser performance still determines achieved frame rate.
 
-Delivery path budget: the added root `.gitignore` is limited to 1 KiB and allowlists exactly seven review files under `artifacts/`: `validation.md`, `design-probe.json`, `render-evidence.json`, `setup-desktop.png`, `setup-mobile.png`, `setup-mobile-demo.png` and `overlay-1280.png`, together limited to 512 KiB. It also excludes dependency/cache directories at every nesting level and disposable `test/scratch/`. The complete submission remains below the assignment’s 8 MiB limit; the production export is 133,193 bytes in seven files. No dependency archives or caches are delivered.
+Delivery path budget: the added root `.gitignore` is limited to 1 KiB and allowlists exactly seven review files under `artifacts/`: `validation.md`, `design-probe.json`, `render-evidence.json`, `setup-desktop.png`, `setup-mobile.png`, `setup-mobile-demo.png` and `overlay-1280.png`, together limited to 512 KiB. It also excludes dependency/cache directories at every nesting level and disposable `test/scratch/`. The complete submission remains below the assignment’s 8 MiB limit; the production export is 134,097 bytes in seven files. No dependency archives or caches are delivered.
 
 ## Source map and attribution
 

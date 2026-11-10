@@ -215,9 +215,13 @@ async function until(fn, description) {
   throw new Error(`Timed out: ${description}`);
 }
 async function advance(page, m, ms) {
+  // Wait for any poll the jump triggers to be answered and rendered, instead of
+  // a fixed 80 ms that a busy machine can outrun (seen as a stale RPM reading).
+  const before = m.requests.length;
   m.now += ms;
   await page.clock.fastForward(ms);
-  await wait(80);
+  for (let i = 0; i < 40 && m.requests.length === before; i++) await wait(25);
+  await wait(m.requests.length === before ? 80 : 250);
 }
 async function online(page) {
   await until(

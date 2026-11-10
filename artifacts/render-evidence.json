@@ -1,38 +1,85 @@
 {
-  "viewport": {
-    "width": 390,
-    "height": 844
-  },
-  "copyButton": {
-    "x": 20,
-    "y": 730.875,
-    "width": 216.71875,
-    "height": 48
-  },
-  "fonts": [
-    {
-      "family": "Wheel Bits",
-      "weight": "400",
-      "status": "loaded"
+  "captured": "2026-11-10, final production export served under /preview/, Chromium headless shell 1248, live public API https://api.squeekchain.com/v1 reached through this machine's egress proxy",
+  "mobile390": {
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "touch": true
+    },
+    "copyButton": {
+      "x": 20,
+      "y": 730.875,
+      "width": 216.71875,
+      "height": 48
+    },
+    "horizontalOverflowPx": {
+      "w320": 0,
+      "w390": 0,
+      "w1440": 0
+    },
+    "dataStatus": "Squeekchain connected",
+    "headingDot": {
+      "live": "preview-dot",
+      "demo": "preview-dot is-demo",
+      "afterDemoOff": "preview-dot"
+    },
+    "hoverMediaMatches": false,
+    "copyBackgroundAfterTap": "rgb(245, 186, 105)",
+    "values": {
+      "state": "Sleeping",
+      "rpm": "0.0",
+      "rpm-caption": "A well-earned wheel break",
+      "distance": "0.0",
+      "distance-unit": "m",
+      "height": "5,376",
+      "round-id": "972",
+      "countdown": "08:36",
+      "vote-total": "0 votes",
+      "run": "0",
+      "sleep": "0",
+      "vote-hint": "Connecting to Twitch chat",
+      "connection": "Squeekchain connected",
+      "cheer": "New Squeek block!",
+      "result-title": "",
+      "result-detail": "",
+      "callout": "0.0 RPM · Squeek height 5,376"
     }
-  ],
-  "live": {
-    "rpm": "0.0",
-    "state": "Sleeping",
-    "distance": "0.0",
-    "height": "3,205",
-    "round": "728",
-    "countdown": "02:27"
   },
-  "overlayCanvas": {
-    "width": 1280,
-    "height": 720
+  "desktop1440": {
+    "copyBackground": {
+      "rest": "rgb(245, 186, 105)",
+      "hover": "rgb(255, 208, 141)"
+    },
+    "keyboardFocusOutline": "solid 2px rgb(185, 232, 209)"
   },
-  "overlayBounds": {
-    "x": 24,
-    "y": 510.40625,
-    "width": 1040,
-    "height": 185.59375
+  "overlay1280": {
+    "href": "<local preview>/overlay/index.html?layout=badge&theme=dark&accent=F5BA69&scale=1&widgets=rpm%2Cstatus%2Cdistance%2Cblocks%2Cround%2Cvotes%2Cleaderboard&channel=&sound=0&motion=1&session=fc8593b8-0da2-4683-a2ea-1a457f697428",
+    "online": "true",
+    "values": {
+      "state": "Sleeping",
+      "rpm": "0.0",
+      "rpm-caption": "A well-earned wheel break",
+      "distance": "0.0",
+      "distance-unit": "m",
+      "height": "5,376",
+      "round-id": "972",
+      "countdown": "08:33",
+      "vote-total": "0 votes",
+      "run": "0",
+      "sleep": "0",
+      "vote-hint": "Connecting to Twitch chat",
+      "connection": "Squeekchain connected",
+      "cheer": "New Squeek block!",
+      "result-title": "",
+      "result-detail": "",
+      "callout": "0.0 RPM · Squeek height 5,376"
+    }
   },
-  "pageErrors": []
+  "pageErrors": [],
+  "failedRequestsNote": "Requests listed were aborted when the test closed pages mid-poll",
+  "failedRequests": [
+    "https://api.squeekchain.com/v1/core net::ERR_ABORTED",
+    "https://api.squeekchain.com/v1/status net::ERR_ABORTED",
+    "https://api.squeekchain.com/v1/measurement/stats?range=7d net::ERR_ABORTED"
+  ]
 }

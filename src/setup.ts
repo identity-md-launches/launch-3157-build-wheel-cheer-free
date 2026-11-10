@@ -342,6 +342,10 @@ export class SetupPage {
     const status = this.root.querySelector("#data-status")!;
     status.classList.toggle("is-offline", !snapshot.online && !demo);
     status.classList.toggle("is-demo", demo);
+    // The heading dot repeats the footer state, so it never shows green while offline.
+    const dot = this.root.querySelector(".preview-dot")!;
+    dot.classList.toggle("is-offline", !snapshot.online && !demo);
+    dot.classList.toggle("is-demo", demo);
     const label = demo ? "Demo data · preview only" : snapshot.reason;
     const target = status.lastElementChild!;
     if (target.textContent !== label) target.textContent = label;
